@@ -24,7 +24,7 @@ func MultiProbeHashing(vNodeMultiplier int) []int {
 	})
 	for lease := 0; lease < NumLeases; lease++ {
 		finalOwner := 0
-		minDistance := math.MaxInt64
+		var minDistance uint64 = math.MaxUint64
 		for v := 0; v < vNodeMultiplier; v++ {
 			value := md5.Sum([]byte(fmt.Sprintf("lease %d-%d-%d", r, lease, v)))
 			str := string(value[:])
@@ -43,12 +43,12 @@ func MultiProbeHashing(vNodeMultiplier int) []int {
 	return nodeCounts
 }
 
-func distance(a, b string) int {
+func distance(a, b string) uint64 {
 	buffer := make([]byte, 8)
 	copy(buffer, []byte(a))
 	aValue := binary.BigEndian.Uint64(buffer)
 	copy(buffer, []byte(b))
 	bValue := binary.BigEndian.Uint64(buffer)
-	d := int(aValue - bValue)
+	d := aValue - bValue
 	return d
 }
