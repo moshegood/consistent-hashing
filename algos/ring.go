@@ -1,9 +1,10 @@
 package algos
 
 import (
-	"crypto/md5"
+	"cmp"
 	"fmt"
 	"math/rand"
+	"slices"
 	"sort"
 )
 
@@ -12,41 +13,37 @@ func RingHash(vNodeMultiplier int) []int {
 	var nodes []circularHashEntry
 	for node := 0; node < NumNodes; node++ {
 		for v := 0; v < vNodeMultiplier; v++ {
-			value := md5.Sum([]byte(fmt.Sprintf("node %d-%d-%d", r, node, v)))
-			str := string(value[:])
-			nodes = append(nodes, circularHashEntry{str, node})
+			value := HashBinaryKey("node", r, node, v)
+			nodes = append(nodes, circularHashEntry{value, node})
 		}
 	}
 	sort.Slice(nodes, func(i, j int) bool {
 		return nodes[i].hashValue < nodes[j].hashValue
 	})
 	nodeCounts := make([]int, NumNodes)
-	leases := []string{}
 	for lease := 0; lease < NumLeases; lease++ {
-		value := md5.Sum([]byte(fmt.Sprintf("lease %d-%d", r, lease)))
-		str := string(value[:])
-		nodeCounts[getCircularHashOwner(nodes, str).node]++
-		leases = append(leases, fmt.Sprintf("%x", str))
+		value := HashUnaryKey("lease", r, lease)
+		nodeCounts[getCircularHashOwner(nodes, value).node]++
 	}
 	return nodeCounts
 }
 
-func getCircularHashOwner(nodes []circularHashEntry, hashValue string) circularHashEntry {
+func getCircularHashOwner(nodes []circularHashEntry, hashValue uint64) circularHashEntry {
 	// Find the first entry that is greater than the hash value.
-	// TODO: Optimize with binary search? It's such a small list.
-	for _, entry := range nodes {
-		if entry.hashValue >= hashValue {
-			return entry
-		}
+	index, _ := slices.BinarySearchFunc(nodes, hashValue, func(entry circularHashEntry, hashValue uint64) int {
+		return cmp.Compare(entry.hashValue, hashValue)
+	})
+	if index == len(nodes) {
+		return nodes[0]
 	}
-	return nodes[0]
+	return nodes[index]
 }
 
 type circularHashEntry struct {
-	hashValue string
+	hashValue uint64
 	node      int
 }
 
 func (entry circularHashEntry) String() string {
-	return fmt.Sprintf("%d: %x", entry.node, entry.hashValue)
+	return fmt.Sprintf("%d: %d", entry.node, entry.hashValue)
 }
