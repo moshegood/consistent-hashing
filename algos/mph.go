@@ -1,9 +1,6 @@
 package algos
 
 import (
-	"crypto/md5"
-	"encoding/binary"
-	"fmt"
 	"math"
 	"math/rand"
 	"sort"
@@ -15,9 +12,8 @@ func MultiProbeHashing(vNodeMultiplier int) []int {
 
 	var nodes []circularHashEntry
 	for node := 0; node < NumNodes; node++ {
-		value := md5.Sum([]byte(fmt.Sprintf("node %d-%d", r, node)))
-		str := string(value[:])
-		nodes = append(nodes, circularHashEntry{str, node})
+		value := HashUnaryKey("node", r, node)
+		nodes = append(nodes, circularHashEntry{value, node})
 	}
 	sort.Slice(nodes, func(i, j int) bool {
 		return nodes[i].hashValue < nodes[j].hashValue
@@ -26,12 +22,11 @@ func MultiProbeHashing(vNodeMultiplier int) []int {
 		finalOwner := 0
 		var minDistance uint64 = math.MaxUint64
 		for v := 0; v < vNodeMultiplier; v++ {
-			value := md5.Sum([]byte(fmt.Sprintf("lease %d-%d-%d", r, lease, v)))
-			str := string(value[:])
-			entry := getCircularHashOwner(nodes, str)
-			d := distance(entry.hashValue, str)
+			value := HashBinaryKey("lease", r, lease, v)
+			entry := getCircularHashOwner(nodes, value)
+			d := entry.hashValue - value
 			if d < minDistance {
-				// fmt.Printf("Lease %d: Picked %x(%d) for %x with distance %d\n", lease, entry.hashValue, entry.node, str, d)
+				// fmt.Printf("Lease %d: Picked %d(%d) for %d with distance %d\n", lease, entry.hashValue, entry.node, value, d)
 				minDistance = d
 				finalOwner = entry.node
 			}
@@ -40,15 +35,6 @@ func MultiProbeHashing(vNodeMultiplier int) []int {
 		nodeCounts[finalOwner]++
 	}
 	// fmt.Printf("NODES: %+v\n", nodes)
+	// fmt.Printf("NODE COUNTS: %+v\n", nodeCounts)
 	return nodeCounts
-}
-
-func distance(a, b string) uint64 {
-	buffer := make([]byte, 8)
-	copy(buffer, []byte(a))
-	aValue := binary.BigEndian.Uint64(buffer)
-	copy(buffer, []byte(b))
-	bValue := binary.BigEndian.Uint64(buffer)
-	d := aValue - bValue
-	return d
 }
