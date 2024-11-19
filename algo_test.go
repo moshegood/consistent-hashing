@@ -1,37 +1,44 @@
-package main
+package algos
 
 import (
 	"fmt"
 	"math/rand"
+	"testing"
 	"time"
-
-	"github.com/moshegood/consistent-hashing/algos"
 )
 
 const runs = 200
 
-func main() {
+func init() {
 	rand.Seed(time.Now().UnixNano())
-	fmt.Println("=============== RingHash ===============")
+}
+
+func TestRingHash(t *testing.T) {
+	t.Log("=============== RingHash ===============")
 	for vNodes := 1; vNodes < 1000; vNodes *= 3 {
-		runTest(fmt.Sprintf("RingHash(%d)", vNodes), func() []int { return algos.RingHash(vNodes) })
-	}
-
-	fmt.Println("========== HighestRandomWeight ==========")
-	runTest("Rendezvous", algos.HighestRandomWeight)
-
-	fmt.Println("============== MultiProbe ==============")
-	for vNodes := 1; vNodes < 30; vNodes += 5 {
-		runTest(fmt.Sprintf("MultiProbe(%d)", vNodes), func() []int { return algos.MultiProbeHashing(vNodes) })
+		runTest(t, fmt.Sprintf("RingHash(%d)", vNodes), func() []int { return RingHash(vNodes) })
 	}
 }
 
-func runTest(name string, f func() []int) {
+func TestHighestRandomWeight(t *testing.T) {
+	t.Log("========== HighestRandomWeight ==========")
+	runTest(t, "Rendezvous", HighestRandomWeight)
+
+}
+
+func TestMultiProbe(t *testing.T) {
+	t.Log("============== MultiProbe ==============")
+	for vNodes := 1; vNodes < 30; vNodes += 5 {
+		runTest(t, fmt.Sprintf("MultiProbe(%d)", vNodes), func() []int { return MultiProbeHashing(vNodes) })
+	}
+}
+
+func runTest(t *testing.T, name string, f func() []int) {
 	maxV := 0.0
 	totalV := 0.0
 	totalSpread := 0
 	maxSpread := 0
-	lowestNodeCount := algos.NumLeases
+	lowestNodeCount := NumLeases
 	highestNodeCount := 0
 	for run := 0; run < runs; run++ {
 		nodeCounts := f()
@@ -54,8 +61,8 @@ func runTest(name string, f func() []int) {
 			}
 		}
 	}
-	fmt.Printf("Test: %s\t- Variance: max - %0.2f avg - %0.2f. Spread: max - %v avg %v\n", name, maxV, totalV/runs, maxSpread, totalSpread/runs)
-	fmt.Printf("\tLowest node count: %v. Higest node count: %v. Diff: %v\n", lowestNodeCount, highestNodeCount, highestNodeCount-lowestNodeCount)
+	t.Logf("Test: %s\t- Variance: max - %0.2f avg - %0.2f. Spread: max - %v avg %v\n", name, maxV, totalV/runs, maxSpread, totalSpread/runs)
+	t.Logf("\tLowest node count: %v. Higest node count: %v. Diff: %v\n", lowestNodeCount, highestNodeCount, highestNodeCount-lowestNodeCount)
 }
 
 func variance(data []int) float64 {

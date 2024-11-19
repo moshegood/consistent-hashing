@@ -47,7 +47,7 @@ func MakeRing(nodeCount, vNodeMultiplier int) []circularHashEntry {
 	return nodes
 }
 
-func FindOwnerOfLeaseInRing(ring []circularHashEntry, lease int, vNodeMultiplier int) {
+func FindOwnerOfLeaseInRing(ring []circularHashEntry, lease int, vNodeMultiplier int) int {
 	r := rand.Int63()
 	finalOwner := 0
 	var minDistance uint64 = math.MaxUint64
@@ -55,7 +55,7 @@ func FindOwnerOfLeaseInRing(ring []circularHashEntry, lease int, vNodeMultiplier
 		Hasher.Reset()
 		Hasher.Write([]byte(fmt.Sprintf("lease %d-%d-%d", r, lease, v)))
 		value := Hasher.Sum64()
-		entry := getCircularHashOwner(nodes, value)
+		entry := getCircularHashOwner(ring, value)
 		d := distance(entry.hashValue, value)
 		if d < minDistance {
 			// fmt.Printf("Lease %d: Picked %x(%d) for %x with distance %d\n", lease, entry.hashValue, entry.node, str, d)
