@@ -12,9 +12,7 @@ func HighestRandomWeight() []int {
 		var max uint64 = 0
 		n := -1
 		for node := 0; node < NumNodes; node++ {
-			Hasher.Reset()
-			Hasher.Write([]byte(fmt.Sprintf("rendezvous %d-%d-%d", r, lease, node)))
-			value := Hasher.Sum64()
+			value := HashingFunction(fmt.Sprintf("rendezvous %d-%d-%d", r, lease, node))
 
 			if value > max {
 				max = value

@@ -12,9 +12,7 @@ func RingHash(vNodeMultiplier int) []int {
 	r := rand.Int63()
 	nodeCounts := make([]int, NumNodes)
 	for lease := 0; lease < NumLeases; lease++ {
-		Hasher.Reset()
-		Hasher.Write([]byte(fmt.Sprintf("lease %d-%d", r, lease)))
-		value := Hasher.Sum64()
+		value := HashingFunction(fmt.Sprintf("lease %d-%d", r, lease))
 		nodeCounts[getCircularHashOwner(ring, value).node]++
 	}
 	return nodeCounts
@@ -35,9 +33,7 @@ func MakeRing(nodeCount, vNodeMultiplier int) []circularHashEntry {
 	var nodes []circularHashEntry
 	for node := 0; node < nodeCount; node++ {
 		for v := 0; v < vNodeMultiplier; v++ {
-			Hasher.Reset()
-			Hasher.Write([]byte(fmt.Sprintf("node %d-%d-%d", r, node, v)))
-			value := Hasher.Sum64()
+			value := HashingFunction(fmt.Sprintf("node %d-%d-%d", r, node, v))
 			nodes = append(nodes, circularHashEntry{value, node})
 		}
 	}
@@ -52,9 +48,7 @@ func FindOwnerOfLeaseInRing(ring []circularHashEntry, lease int, vNodeMultiplier
 	finalOwner := 0
 	var minDistance uint64 = math.MaxUint64
 	for v := 0; v < vNodeMultiplier; v++ {
-		Hasher.Reset()
-		Hasher.Write([]byte(fmt.Sprintf("lease %d-%d-%d", r, lease, v)))
-		value := Hasher.Sum64()
+		value := HashingFunction(fmt.Sprintf("lease %d-%d-%d", r, lease, v))
 		entry := getCircularHashOwner(ring, value)
 		d := distance(entry.hashValue, value)
 		if d < minDistance {

@@ -1,7 +1,6 @@
 package algos
 
 import (
-	"crypto/md5"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -12,7 +11,6 @@ const runs = 200
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	Hasher = &md5Hasher{md5.New()}
 }
 
 func TestRingHash(t *testing.T) {
