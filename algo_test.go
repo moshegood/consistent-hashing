@@ -15,7 +15,7 @@ func init() {
 
 func TestRingHash(t *testing.T) {
 	t.Log("=============== RingHash ===============")
-	for vNodes := 1; vNodes < 1000; vNodes *= 3 {
+	for vNodes := 1; vNodes < 2000; vNodes *= 4 {
 		runTest(t, fmt.Sprintf("RingHash(%d)", vNodes), func() []int { return RingHash(vNodes) })
 	}
 }
@@ -40,6 +40,7 @@ func runTest(t *testing.T, name string, f func() []int) {
 	maxSpread := 0
 	lowestNodeCount := NumLeases
 	highestNodeCount := 0
+	start := time.Now()
 	for run := 0; run < runs; run++ {
 		nodeCounts := f()
 		vrnce := variance(nodeCounts[:])
@@ -61,8 +62,10 @@ func runTest(t *testing.T, name string, f func() []int) {
 			}
 		}
 	}
-	t.Logf("Test: %s\t- Variance: max - %0.2f avg - %0.2f. Spread: max - %v avg %v\n", name, maxV, totalV/runs, maxSpread, totalSpread/runs)
+	t.Logf("Test: %s", name)
+	t.Logf("\tVariance: max = %0.2f avg = %0.2f. Spread: max = %v avg = %v\n", maxV, totalV/runs, maxSpread, totalSpread/runs)
 	t.Logf("\tLowest node count: %v. Higest node count: %v. Diff: %v\n", lowestNodeCount, highestNodeCount, highestNodeCount-lowestNodeCount)
+	t.Logf("\tTime:%v", time.Since(start))
 }
 
 func variance(data []int) float64 {
