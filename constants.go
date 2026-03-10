@@ -30,7 +30,7 @@ func internalHashingFunction(s string) uint64 {
 }
 
 func init() {
-	if is64Bit && false {
+	if is64Bit {
 		HashingFunction = internalHashingFunction
 	} else {
 		HashingFunction = md5HashingFunction

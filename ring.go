@@ -61,13 +61,14 @@ func FindOwnerOfLeaseInRing(ring []circularHashEntry, lease int, vNodeMultiplier
 }
 
 func getCircularHashOwner(nodes []circularHashEntry, hashValue uint64) circularHashEntry {
-	// Find the first entry that is greater than the hash value.
-	// TODO: Optimize with binary search? It's such a small list.
-	for _, entry := range nodes {
-		if entry.hashValue >= hashValue {
-			return entry
-		}
+	// Binary search to find the first entry that is >= hashValue.
+	idx := sort.Search(len(nodes), func(i int) bool {
+		return nodes[i].hashValue >= hashValue
+	})
+	if idx < len(nodes) {
+		return nodes[idx]
 	}
+	// If no entry is >= hashValue, wrap around to the first entry.
 	return nodes[0]
 }
 
