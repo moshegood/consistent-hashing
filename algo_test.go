@@ -2,9 +2,14 @@ package algos
 
 import (
 	"fmt"
+	"hash/fnv"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/cespare/xxhash/v2"
+	"github.com/orisano/wyhash"
+	rapidhash "github.com/vkudryk/rapidhash-go"
 )
 
 const runs = 200
@@ -31,6 +36,49 @@ func TestMultiProbe(t *testing.T) {
 	for vNodes := 1; vNodes < 30; vNodes += 5 {
 		runTest(t, fmt.Sprintf("MultiProbe(%d)", vNodes), func() []int { return MultiProbeHashing(vNodes) })
 	}
+}
+
+func BenchmarkHashingFunctions(b *testing.B) {
+	input := "benchmark-input-string-for-hashing-performance-comparison"
+	b_input := []byte(input)
+
+	b.Run("InternalUnsafe", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = internalHashingFunction(input)
+		}
+	})
+
+	b.Run("MD5Slow", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = md5HashingFunction(input)
+		}
+	})
+
+	b.Run("FNVFast", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			h := fnv.New64a()
+			h.Write(b_input)
+			_ = h.Sum64()
+		}
+	})
+	b.Run("Wyhash", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			h := wyhash.New(0)
+			h.Write(b_input)
+			_ = h.Sum64()
+		}
+	})
+	b.Run("RapidHash", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = rapidhash.Hash(b_input)
+		}
+	})
+
+	b.Run("XXHash", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = xxhash.Sum64String(input)
+		}
+	})
 }
 
 func runTest(t *testing.T, name string, f func() []int) {
